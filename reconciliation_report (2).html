@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AI Finance Controller — Reconciliation Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #0B1220;
+        --panel: #121A2C;
+        --panel-2: #17203570;
+        --border: #26314A;
+        --text: #E8ECF4;
+        --muted: #8993AB;
+        --accent: #E8A33D;
+        --accent-dim: #E8A33D22;
+        --risk: #E5595F;
+        --risk-dim: #E5595F1a;
+        --ok: #4ADE80;
+    }
+    * { box-sizing: border-box; }
+    body {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: var(--bg);
+        background-image:
+            linear-gradient(var(--panel-2) 1px, transparent 1px),
+            linear-gradient(90deg, var(--panel-2) 1px, transparent 1px);
+        background-size: 100% 32px, 32px 100%;
+        color: var(--text);
+        margin: 0;
+        padding: 48px 24px 80px;
+    }
+    .container { max-width: 880px; margin: 0 auto; }
+
+    .masthead { border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+    .masthead-title { font-family: 'IBM Plex Serif', serif; font-weight: 700; font-size: 26px; letter-spacing: -0.01em; }
+    .masthead-title span { color: var(--accent); }
+    .masthead-sub { font-family: 'IBM Plex Mono', monospace; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px; }
+    .masthead-stamp { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); text-align: right; line-height: 1.6; }
+
+    .ledger-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 40px;
+        background: var(--panel);
+    }
+    .ledger-cell { padding: 20px 18px; border-right: 1px solid var(--border); }
+    .ledger-cell:last-child { border-right: none; }
+    .ledger-num { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    .ledger-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 6px; }
+    .num-ok { color: var(--ok); }
+    .num-risk { color: var(--risk); }
+    .num-accent { color: var(--accent); }
+
+    .section-title {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--accent); margin: 40px 0 16px;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .section-title::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+
+    .stub {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        margin-bottom: 14px;
+        position: relative;
+        overflow: hidden;
+    }
+    .stub::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--risk); }
+    .stub-head {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 16px 20px 12px 24px; border-bottom: 1px dashed var(--border);
+    }
+    .stub-id { font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 14px; }
+    .stub-type { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--risk); background: var(--risk-dim); padding: 4px 10px; border-radius: 20px; }
+    .stub-body { padding: 16px 24px 20px; }
+    .stub-amount { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; color: var(--risk); font-variant-numeric: tabular-nums; margin-bottom: 10px; }
+    .stub-explanation { color: var(--text); line-height: 1.6; font-size: 14px; margin-bottom: 14px; }
+    .stub-action { display: flex; gap: 10px; padding: 12px 14px; background: var(--accent-dim); border: 1px solid #E8A33D33; border-radius: 4px; font-size: 13px; line-height: 1.5; }
+    .stub-action-icon { color: var(--accent); font-family: 'IBM Plex Mono', monospace; font-weight: 700; flex-shrink: 0; }
+
+    .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--border); font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+<div class="container">
+
+    <div class="masthead">
+        <div>
+            <div class="masthead-title">AI Finance <span>Controller</span></div>
+            <div class="masthead-sub">Reconciliation Ledger — Orders vs Payments</div>
+        </div>
+        <div class="masthead-stamp">
+            BATCH SIZE: 80 RECORDS<br>
+            RUN TYPE: SYNTHETIC TEST DATA
+        </div>
+    </div>
+
+    <div class="ledger-strip">
+        <div class="ledger-cell">
+            <div class="ledger-num">80</div>
+            <div class="ledger-label">Orders Processed</div>
+        </div>
+        <div class="ledger-cell">
+            <div class="ledger-num num-ok">75.0%</div>
+            <div class="ledger-label">Match Rate</div>
+        </div>
+        <div class="ledger-cell">
+            <div class="ledger-num num-risk">20</div>
+            <div class="ledger-label">Exceptions Found</div>
+        </div>
+        <div class="ledger-cell">
+            <div class="ledger-num num-accent">₹26,044</div>
+            <div class="ledger-label">Amount At Risk</div>
+        </div>
+    </div>
+
+    <div class="section-title">Flagged Exceptions — AI Reviewed</div>
+
+    <div class="stub">
+        <div class="stub-head">
+            <span class="stub-id">ORD1061</span>
+            <span class="stub-type">Missing Payment</span>
+        </div>
+        <div class="stub-body">
+            <div class="stub-amount">₹4,346.42</div>
+            <div class="stub-explanation">Order ORD1061 was recorded for Arjun, but no corresponding payment of ₹4346.42 was captured or received in the system.</div>
+            <div class="stub-action">
+                <span class="stub-action-icon">→</span>
+                <span>Contact Arjun to request proof of payment or re-initiate the payment process, and check the payment gateway logs for failed transactions.</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stub">
+        <div class="stub-head">
+            <span class="stub-id">ORD1064</span>
+            <span class="stub-type">Missing Payment</span>
+        </div>
+        <div class="stub-body">
+            <div class="stub-amount">₹4,336.03</div>
+            <div class="stub-explanation">Order ORD1064 was processed for Diya, but the payment of ₹4336.03 was not received or failed to record in the system.</div>
+            <div class="stub-action">
+                <span class="stub-action-icon">→</span>
+                <span>Check the payment gateway logs for failed transactions or email the customer to request payment verification.</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stub">
+        <div class="stub-head">
+            <span class="stub-id">ORD1062</span>
+            <span class="stub-type">Missing Payment</span>
+        </div>
+        <div class="stub-body">
+            <div class="stub-amount">₹3,336.59</div>
+            <div class="stub-explanation">Order ORD1062 was placed by Vivaan for ₹3336.59, but no corresponding payment transaction was recorded in the system.</div>
+            <div class="stub-action">
+                <span class="stub-action-icon">→</span>
+                <span>Contact Vivaan to request payment confirmation or verify the transaction status with the payment gateway.</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stub">
+        <div class="stub-head">
+            <span class="stub-id">ORD1066</span>
+            <span class="stub-type">Missing Payment</span>
+        </div>
+        <div class="stub-body">
+            <div class="stub-amount">₹2,225.03</div>
+            <div class="stub-explanation">Order ORD1066 was created for ₹2225.03, but no payment was captured in the system, likely due to a failed or incomplete checkout transaction.</div>
+            <div class="stub-action">
+                <span class="stub-action-icon">→</span>
+                <span>Check the payment gateway logs for a recorded transaction and contact Ishaan to confirm payment status.</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="stub">
+        <div class="stub-head">
+            <span class="stub-id">ORD1075</span>
+            <span class="stub-type">Duplicate Payment</span>
+        </div>
+        <div class="stub-body">
+            <div class="stub-amount">₹1,835.70</div>
+            <div class="stub-explanation">The customer Aditi appears to have made a duplicate payment of ₹1835.7 for order ORD1075.</div>
+            <div class="stub-action">
+                <span class="stub-action-icon">→</span>
+                <span>Verify the duplicate transaction in the payment gateway and process a refund of ₹1835.7 to the customer.</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">GENERATED FOR RAZORPAY AI BUILDATHON · TRACK 04 · AI FINANCE CONTROLLER</div>
+</div>
+</body>
+</html>
